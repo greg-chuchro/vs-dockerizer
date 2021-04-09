@@ -1,0 +1,182 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!--  This is the file that defines the actual layout and type of the commands.
+        It is divided in different sections (e.g. command definition, command
+        placement, ...), with each defining a specific set of properties.
+        See the comment before each section for more details about how to
+        use it. -->
+
+  <!--  The VSCT compiler (the tool that translates this file into the binary
+        format that VisualStudio will consume) has the ability to run a preprocessor
+        on the vsct file; this preprocessor is (usually) the C++ preprocessor, so
+        it is possible to define includes and macros with the same syntax used
+        in C++ files. Using this ability of the compiler here, we include some files
+        defining some of the constants that we will use inside the file. -->
+
+  <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
+  <Extern href="stdidcmd.h" />
+
+  <!--This header contains the command ids for the menus provided by the shell. -->
+  <Extern href="vsshlids.h" />
+
+  <!--The Commands section is where commands, menus, and menu groups are defined.
+      This section uses a Guid to identify the package that provides the command defined inside it. -->
+  <Commands package="guidVSDockerizerPackage">
+    <!-- Inside this section we have different sub-sections: one for the menus, another
+    for the menu groups, one for the buttons (the actual commands), one for the combos
+    and the last one for the bitmaps used. Each element is identified by a command id that
+    is a unique pair of guid and numeric identifier; the guid part of the identifier is usually
+    called "command set" and is used to group different command inside a logically related
+    group; your package should define its own command set in order to avoid collisions
+    with command ids defined by other packages. -->
+
+    <!-- In this section you can define new menu groups. A menu group is a container for
+         other menus or buttons (commands); from a visual point of view you can see the
+         group as the part of a menu contained between two lines. The parent of a group
+         must be a menu. -->
+    <Groups>
+      <Group guid="guidVSDockerizerPackageCmdSet" id="StandardToolbarGroup" priority="0xF000">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD"/>
+      </Group>
+    </Groups>
+
+    <Combos>
+      <!-- NOTE: An important thing to know about combos is that if they are placed on a toolbar that is visible, and they are not marked
+                 with the CommandFlag DefaultDisabled the shell will load your package in order to determine the item to display in the
+                 display area (this is because it is done via IOleCommandTarget::Exec, and there is no special case logic to realize the
+                 Exec request is really a 'query' in disguise. This sample has all combos as being enabled out of the box; if the ComboBox 
+                 toolbar is set as visible, your package will be force loaded next time you start Visual Studio. But in general practice you 
+                 need to consider if you want your combos to be enabled (which is the default) and if so if you are fine with your package 
+                 being loaded almost immediately on rendering of the UI.
+      
+            The following types of combo boxes are supported: 
+            DropDownCombo 
+              a DropDownCombo does not let the user type into the combo box; they can only pick from the list of
+              items in the drop down. The string value of the element selected is given as a parameter when the 
+              command is executed (which happens automatically when the user chooses an item).
+              This type of combo could be used for something like the "Solution Configurations" combo on the "Standard" toolbar. 
+            IndexCombo 
+              An IndexCombo is the same as a DropDownCombo in that it is a "pick from the list" only combo. 
+              The difference is an IndexCombo returns the selected value as an index into the list (0 based). 
+              This type of combo could be used for something like the "Solution Configurations" combo on the "Standard" toolbar. 
+            MRUCombo 
+              An MRUCombo allows the user to type into the edit box. The history of strings entered 
+              is automatically persisted by the IDE on a per-user/per-machine basis.  
+              This type of combo could be used for something like the "Find" combo that was on the standard toolbar in previous
+              versions. It has been moved to the overflow area of the standard toolbar on more recent versions as part of the 
+              toolbar reduction effort.
+            DynamicCombo 
+              A DynamicCombo allows the user to type into the edit box or pick from the list. The  
+              list of choices is usually fixed and is managed by the command handler for the command.
+              This type of combo could be used for something like the "Zoom" combo on the "Class Designer" toolbar.
+          The following flags can be applied to Combo boxes: 
+            NoKeyCustomize      (rarely used) 
+            NoButtonCustomize   (rarely used) 
+            NoCustomize         (rarely used) 
+            DefaultInvisible    (often used: Exec is used to fetch info about combos, calling Exec on an unloaded package causes that package to load. If you place a combo on a visible 
+                                 toolbar without setting DefaultInvisible, you will force load your package upon IDE startup) 
+            DefaultDisabled     (often used) 
+            DynamicVisibility   (often used) 
+            CommandWellOnly     (used for commands that may have placements on the main menu for purposes of canonnical name generation but should not be actually created on main menu visually.) 
+            IconAndText         (sometimes used) 
+            FilterKeys          (rarely used ** used to hook window messages on commandbar controls) 
+            StretchHorizontally (only used with combos on Toolwindow toolbars. This tells the shell, when laying out the toolbar, to stretch the combo to fill all horizontal space
+                                 not taken by other controls. This is only honored for the first combo on the toolbar with this flag. An example of a toolbar that uses this is the
+                                 Task List Window's toolbar.) 
+          The following strings can be supplied with a command: 
+            Button Text (required) ** displayed as label of the command on a toolbar if IconAndText flag is specified.
+            If any of the following optional strings are missing then Button Text is used for their values. 
+            Menu Text (optional) ** displayed as label of the command on a menu if IconAndText flag is specified. 
+            Tooltip Text (optional) ** displayed when mouse hovers on command.
+            Command Well Name (optional) ** displayed as name of command in the Add Command dialog.
+            Canonical Name (optional) ** English programmatic name of command used in Command Window and DTE.ExecuteCommand. This name is used in
+                                         place of the ButtonText for purposes of canonical name formation. The value of this tag is appended to the 
+                                         value of the CanonicalName of the root of your placement. So if your command specifies a CanonicalName of 
+                                         Foo and is placed anywhere (at any nesting level) under the File menu, its runtime canonical name would be File.Foo.
+                                         In localized command/menu (CTO) resources, always provide the English canonical name in this tag so macros can be language independent. 
+            Localized Canonical Name (optional) ** Localized programmatic name of command used in Command Window, DTE.ExecuteCommand, and Tools.Options 
+                                                   "Environment/Keyboard" page. If you provide a CanonicalName you should *always* also provide a LocalizedCanonicalName
+                                                   tag, even if they are identical text (as they would be in English since the value of the CanonicalName tag should
+                                                   always be in English). Otherwise, for LocalizedCanonicalName the shell will use your ButtonText, if that is different 
+                                                   than your CanonicalName it means that on non-English versions of Visual Studio your programmatic access name will be 
+                                                   different than it would be on the English version.-->
+      <Combo guid="guidVSDockerizerPackageCmdSet" id="cmdidContainerSelect" priority="0x0100" type="DropDownCombo" defaultWidth="70" idCommandList="cmdidGetContainerList">
+        <Parent guid="guidVSDockerizerPackageCmdSet" id="StandardToolbarGroup"/>
+        <Strings>
+			<ButtonText></ButtonText>
+        </Strings>
+      </Combo>
+    </Combos>
+
+    <!--Buttons section. -->
+    <!--This section defines the elements the user can interact with, like a menu command or a button
+        or combo box in a toolbar. -->
+    <Buttons>
+      <!--To define a menu group you have to specify its ID, the parent menu and its display priority.
+          The command is visible and enabled by default. If you need to change the visibility, status, etc, you can use
+          the CommandFlag node.
+          You can add more than one CommandFlag node e.g.:
+              <CommandFlag>DefaultInvisible</CommandFlag>
+              <CommandFlag>DynamicVisibility</CommandFlag>
+          If you do not want an image next to your command, remove the Icon node /> -->
+      <Button guid="guidVSDockerizerPackageCmdSet" id="cmdidDebug" priority="0x0101" type="Button">
+        <Parent guid="guidVSDockerizerPackageCmdSet" id="StandardToolbarGroup" />
+        <Icon guid="guidImages1" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Invoke Debug</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidVSDockerizerPackageCmdSet" id="cmdidTest" priority="0x0102" type="Button">
+        <Parent guid="guidVSDockerizerPackageCmdSet" id="StandardToolbarGroup" />
+        <Icon guid="guidImages2" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Invoke Test</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+
+    <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
+    <Bitmaps>
+      <!--  The bitmap id is defined in a way that is a little bit different from the others:
+            the declaration starts with a guid for the bitmap strip, then there is the resource id of the
+            bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
+            inside a button definition. An important aspect of this declaration is that the element id
+            must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
+      <Bitmap guid="guidImages1" href="Resources\Debug.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
+      <Bitmap guid="guidImages2" href="Resources\Test.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
+    </Bitmaps>
+  </Commands>
+
+  <Symbols>
+    <!-- This is the package guid. -->
+    <GuidSymbol name="guidVSDockerizerPackage" value="{657ccb17-694b-4e08-b4b6-3b0bdad0de0a}" />
+
+    <!-- This is the guid used to group the menu commands together -->
+    <GuidSymbol name="guidVSDockerizerPackageCmdSet" value="{d596c879-6a47-4f13-9071-d0167946c1b4}">
+      <IDSymbol name="StandardToolbarGroup" value="0x0190"/>
+      <IDSymbol name="cmdidGetContainerList" value="0x101"/>
+      <IDSymbol name="cmdidContainerSelect" value="0x102"/>
+      <IDSymbol value="4129" name="cmdidDebug" />
+      <IDSymbol value="4130" name="cmdidTest" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{0c435160-442c-46ea-b64d-2c4e38506292}" name="guidImages1">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{2294b931-5059-413a-9851-5caecc5327c7}" name="guidImages2">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>
