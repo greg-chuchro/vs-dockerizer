@@ -1,0 +1,13 @@
+﻿{
+  "version": "0.2.0",
+  "adapter": "docker",
+  "adapterArgs": "exec -i {0} /remote_debugger/vsdbg --interpreter=vscode",
+  "configurations": [
+    {
+      "name": ".NET Core Docker Launch",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "/app/{0}.dll"
+    }
+  ]
+}
